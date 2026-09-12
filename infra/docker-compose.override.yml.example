@@ -1,0 +1,11 @@
+version: '3.8'
+
+# Example override file for pointing CipherTrust stack at live testnet (Polygon Amoy)
+services:
+  backend:
+    environment:
+      - MOCK_MODE=false
+      - RPC_URL=https://rpc-amoy.polygon.technology
+      - CHAIN_ID=80002
+      - PRIVATE_KEY=YOUR_DEPLOYED_ISSUER_PRIVATE_KEY
+      - PINATA_JWT=YOUR_LIVE_PINATA_JWT_KEY

@@ -1,0 +1,102 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ciphertrust-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ciphertrust
+      POSTGRES_PASSWORD: ciphertrust_pass
+      POSTGRES_DB: ciphertrust_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ciphertrust -d ciphertrust_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  ipfs:
+    image: ipfs/kubo:v0.28.0
+    container_name: ciphertrust-ipfs
+    restart: always
+    ports:
+      - "4002:4001"
+      - "5002:5001"
+      - "8082:8080"
+    volumes:
+      - ipfs_data:/data/ipfs
+
+  hardhat-node:
+    image: node:20-alpine
+    container_name: ciphertrust-hardhat-node
+    restart: always
+    working_dir: /app
+    volumes:
+      - ../:/app
+    command: >
+      sh -c "npm --prefix packages/contracts run node"
+    ports:
+      - "8555:8545"
+
+  backend:
+    image: node:20-alpine
+    container_name: ciphertrust-backend
+    restart: always
+    working_dir: /app
+    volumes:
+      - ../:/app
+    environment:
+      - PORT=4005
+      - NODE_ENV=development
+      - MOCK_MODE=true
+      - ON_CHAIN_DID_ANCHOR=true
+      - DATABASE_URL=postgresql://ciphertrust:ciphertrust_pass@postgres:5432/ciphertrust_db?schema=public
+      - RPC_URL=http://hardhat-node:8545
+      - CHAIN_ID=31337
+      - LOCAL_IPFS_URL=http://ipfs:5001
+    ports:
+      - "4005:4005"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      hardhat-node:
+        condition: service_started
+      ipfs:
+        condition: service_started
+    command: >
+      sh -c "npm --prefix apps/backend run db:push &&
+            npm --prefix apps/backend run db:seed &&
+            npm --prefix apps/backend run dev"
+
+  web-portal:
+    image: node:20-alpine
+    container_name: ciphertrust-web-portal
+    restart: always
+    working_dir: /app
+    volumes:
+      - ../:/app
+    ports:
+      - "3005:3005"
+    command: >
+      sh -c "npm --prefix apps/web-portal run dev"
+
+  admin-console:
+    image: node:20-alpine
+    container_name: ciphertrust-admin-console
+    restart: always
+    working_dir: /app
+    volumes:
+      - ../:/app
+    ports:
+      - "3006:3006"
+    command: >
+      sh -c "npm --prefix apps/admin-console run dev"
+
+volumes:
+  postgres_data:
+  ipfs_data:

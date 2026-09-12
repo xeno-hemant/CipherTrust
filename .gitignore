@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+out/
+.next/
+cache/
+artifacts/
+typechain-types/
+
+# Environment & Secrets
+.env
+.env.local
+.env.production
+*.log
+
+# IDE & System
+.DS_Store
+.vscode/
+.idea/
+*.suo
+*.user

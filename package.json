@@ -1,0 +1,22 @@
+{
+  "name": "ciphertrust",
+  "private": true,
+  "version": "1.0.0",
+  "description": "CipherTrust — Blockchain-Based Identity, Access Control & Digital Asset Management Platform",
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "clean": "turbo run clean && rm -rf node_modules"
+  },
+  "devDependencies": {
+    "turbo": "^1.13.0",
+    "typescript": "^5.4.5"
+  },
+  "packageManager": "pnpm@9.1.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
+}

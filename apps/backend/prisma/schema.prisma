@@ -1,0 +1,69 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  ISSUER
+  VERIFIER
+  HOLDER
+}
+
+model User {
+  address      String        @id
+  createdAt    DateTime      @default(now())
+  didDocuments DidDocument[]
+}
+
+model DidDocument {
+  did               String           @id
+  controllerAddress String
+  controller        User             @relation(fields: [controllerAddress], references: [address])
+  publicKey         String
+  createdAt         DateTime         @default(now())
+  verified          Boolean          @default(true)
+  nftAssets         NftAsset[]
+  roleAssignments   RoleAssignment[]
+}
+
+model NftAsset {
+  tokenId         String
+  contractAddress String
+  ownerDid        String
+  owner           DidDocument @relation(fields: [ownerDid], references: [did])
+  metadataUri     String
+  metadataJson    Json
+  mintedBy        String
+  mintedAt        DateTime    @default(now())
+
+  @@id([tokenId, contractAddress])
+}
+
+model RoleAssignment {
+  id         String      @id @default(uuid())
+  did        String
+  didDoc     DidDocument @relation(fields: [did], references: [did])
+  role       Role
+  assignedBy String
+  assignedAt DateTime    @default(now())
+  active     Boolean     @default(true)
+}
+
+model AuditLogEntry {
+  id           String   @id @default(uuid())
+  eventType    String
+  actorAddress String
+  targetDid    String?
+  txHash       String
+  blockNumber  Int
+  logIndex     Int      @default(0)
+  timestamp    DateTime @default(now())
+  metadataJson Json
+
+  @@unique([txHash, logIndex])
+}
