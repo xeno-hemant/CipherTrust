@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port 3006",
-    "build": "tsc && vite build",
+    "build": "npm run build --prefix ../../packages/shared-types && npm run build --prefix ../../packages/sdk && tsc && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
