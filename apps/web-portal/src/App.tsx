@@ -13,8 +13,10 @@ import { IssueAssetPage } from "./components/admin/IssueAssetPage";
 import { RoleManagementPage } from "./components/admin/RoleManagementPage";
 import { AuditLogPage } from "./components/admin/AuditLogPage";
 
+const API_URL = (import.meta as any).env?.VITE_API_URL || "https://ciphertrust-backend.onrender.com/api";
+
 const client = new CipherTrustClient({
-  baseUrl: "http://localhost:4005/api",
+  baseUrl: API_URL,
 });
 
 export const App: React.FC = () => {
