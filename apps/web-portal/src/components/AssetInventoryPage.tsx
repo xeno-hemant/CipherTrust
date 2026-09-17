@@ -8,9 +8,10 @@ import { TransferAssetModal } from "./TransferAssetModal";
 interface AssetInventoryPageProps {
   client: CipherTrustClient;
   session: AuthSession | null;
+  onNavigateToAdmin?: () => void;
 }
 
-export const AssetInventoryPage: React.FC<AssetInventoryPageProps> = ({ client, session }) => {
+export const AssetInventoryPage: React.FC<AssetInventoryPageProps> = ({ client, session, onNavigateToAdmin }) => {
   const [assets, setAssets] = useState<NFTAsset[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -20,6 +21,7 @@ export const AssetInventoryPage: React.FC<AssetInventoryPageProps> = ({ client, 
   const [copiedContract, setCopiedContract] = useState<string | null>(null);
 
   const targetDid = session?.did || `did:ethr:31337:0x70997970C51812dc3A010C7d01b50e0d17dc79C8`;
+  const adminConsoleUrl = (import.meta as any).env?.VITE_ADMIN_CONSOLE_URL || (typeof window !== "undefined" ? window.location.origin : "");
 
   const fetchInventory = async () => {
     setLoading(true);
@@ -105,15 +107,25 @@ export const AssetInventoryPage: React.FC<AssetInventoryPageProps> = ({ client, 
               Mint new digital identity passes or access tokens via the Admin Console to view them here.
             </p>
           </div>
-          <a
-            href="http://localhost:3006"
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-2 bg-gradient-to-r from-sky-600 to-sky-500 hover:from-sky-500 hover:to-sky-400 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-md shadow-sky-500/20 transition-all"
-          >
-            <span>Open Admin Console to Issue Asset</span>
-            <ExternalLink className="w-3.5 h-3.5" />
-          </a>
+          {onNavigateToAdmin ? (
+            <button
+              onClick={onNavigateToAdmin}
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-sky-600 to-sky-500 hover:from-sky-500 hover:to-sky-400 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-md shadow-sky-500/20 transition-all cursor-pointer"
+            >
+              <span>Open Admin Console to Issue Asset</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </button>
+          ) : (
+            <a
+              href={adminConsoleUrl}
+              target={adminConsoleUrl.startsWith("http") ? "_blank" : "_self"}
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-sky-600 to-sky-500 hover:from-sky-500 hover:to-sky-400 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-md shadow-sky-500/20 transition-all"
+            >
+              <span>Open Admin Console to Issue Asset</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

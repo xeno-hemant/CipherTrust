@@ -10,18 +10,21 @@ interface DashboardOverviewProps {
 export const DashboardOverview: React.FC<DashboardOverviewProps> = ({ client }) => {
   const [stats, setStats] = useState<SystemStats | null>(null);
   const [recentAudits, setRecentAudits] = useState<AuditLogEntry[]>([]);
+  const [health, setHealth] = useState<{ status: string; mode?: string } | null>(null);
   const [loading, setLoading] = useState(false);
 
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
-      const [statsData, auditData] = await Promise.all([
+      const [statsData, auditData, healthData] = await Promise.all([
         client.getStats().catch(() => ({ totalDids: 4, totalNfts: 2, activeRolesCount: 4, auditEventsLast24h: 3 })),
         client.getAuditLogs({ limit: 5 }).catch(() => ({ data: [], total: 0, page: 1, limit: 5, totalPages: 1 })),
+        client.getHealth().catch(() => null),
       ]);
 
       setStats(statsData);
       setRecentAudits(auditData.data);
+      setHealth(healthData);
     } catch (err) {
       console.error("Failed to fetch admin stats:", err);
     } finally {
@@ -149,6 +152,19 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({ client }) 
           </h3>
 
           <div className="space-y-3 text-xs">
+            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200">
+              <span className="text-slate-700 font-semibold">Backend API Node</span>
+              {health?.status === "ok" ? (
+                <span className="text-emerald-700 font-bold flex items-center gap-1">
+                  <CheckCircle className="w-3.5 h-3.5" /> Online ({health.mode || "Render"})
+                </span>
+              ) : (
+                <span className="text-amber-600 font-bold flex items-center gap-1">
+                  <Activity className="w-3.5 h-3.5 animate-pulse" /> Live API
+                </span>
+              )}
+            </div>
+
             <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200">
               <span className="text-slate-700 font-semibold">Local Hardhat Chain</span>
               <span className="text-emerald-700 font-bold flex items-center gap-1">

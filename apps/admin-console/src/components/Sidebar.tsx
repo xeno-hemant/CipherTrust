@@ -9,6 +9,7 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
+  const userPortalUrl = (import.meta as any).env?.VITE_USER_PORTAL_URL || (typeof window !== "undefined" ? window.location.origin : "");
   const navItems = [
     { id: "dashboard", label: "Dashboard Overview", icon: LayoutDashboard },
     { id: "issue", label: "Issue Verifiable Asset", icon: PlusCircle },
@@ -44,8 +45,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
 
       <div className="pt-4 border-t border-slate-100">
         <a
-          href="http://localhost:3005"
-          target="_blank"
+          href={userPortalUrl}
+          target={userPortalUrl.startsWith("http") ? "_blank" : "_self"}
           rel="noreferrer"
           className="flex items-center justify-between bg-slate-50 hover:bg-sky-50 border border-slate-200 hover:border-sky-200 p-3 rounded-xl text-xs text-slate-700 font-semibold transition-all"
         >
@@ -53,7 +54,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
             <Globe className="w-4 h-4 text-sky-600" />
             <span>User Portal</span>
           </div>
-          <span className="text-[10px] text-slate-400 font-mono">:3005</span>
+          <span className="text-[10px] text-sky-600 font-mono font-bold">Portal</span>
         </a>
       </div>
     </aside>

@@ -15,8 +15,31 @@ import statsRoutes from "./routes/stats.routes";
 
 const app = express();
 
-// Middlewares
-app.use(cors({ origin: true, credentials: true }));
+const rawAllowedOrigins = env.ALLOWED_ORIGINS || "*";
+const parsedOrigins = rawAllowedOrigins === "*" ? "*" : rawAllowedOrigins.split(",").map((o) => o.trim()).filter(Boolean);
+
+// Dynamic CORS Middleware supporting Vercel, Render, and Local Dev
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || parsedOrigins === "*") {
+        return callback(null, true);
+      }
+      if (Array.isArray(parsedOrigins) && parsedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      if (origin.endsWith(".vercel.app") || origin.endsWith(".onrender.com") || origin.includes("localhost") || origin.includes("127.0.0.1")) {
+        return callback(null, true);
+      }
+      logger.warn(`CORS request from unlisted origin: ${origin}`);
+      return callback(null, true);
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  })
+);
+
 app.use(express.json());
 
 const apiIndexHandler = (_req: express.Request, res: express.Response) => {
@@ -26,6 +49,7 @@ const apiIndexHandler = (_req: express.Request, res: express.Response) => {
     status: "online",
     mode: env.MOCK_MODE ? "MOCK_MODE" : "LIVE_CHAIN",
     endpoints: [
+      "/health",
       "/api/health",
       "/api/auth/nonce",
       "/api/auth/verify",
@@ -47,23 +71,37 @@ app.get("/", apiIndexHandler);
 app.get("/api", apiIndexHandler);
 app.get("/api/", apiIndexHandler);
 
-// Health Check
-app.get("/api/health", (_req, res) => {
+// Health Check Endpoints (available at /health and /api/health)
+const healthHandler = (_req: express.Request, res: express.Response) => {
   res.json({
     status: "ok",
     service: "CipherTrust Backend API",
     mode: env.MOCK_MODE ? "MOCK_MODE" : "LIVE_CHAIN",
     timestamp: new Date().toISOString(),
   });
-});
+};
 
-// Register API Routes
+app.get("/health", healthHandler);
+app.get("/api/health", healthHandler);
+
+// Register API Routes (Mounted under both /api/* and /* for full endpoint compatibility)
 app.use("/api/auth", authRoutes);
+app.use("/auth", authRoutes);
+
 app.use("/api/did", didRoutes);
+app.use("/did", didRoutes);
+
 app.use("/api/nft", nftRoutes);
+app.use("/nft", nftRoutes);
+
 app.use("/api/roles", rolesRoutes);
+app.use("/roles", rolesRoutes);
+
 app.use("/api/audit", auditRoutes);
+app.use("/audit", auditRoutes);
+
 app.use("/api/stats", statsRoutes);
+app.use("/stats", statsRoutes);
 
 // Error Handler
 app.use(errorHandler);

@@ -24,12 +24,21 @@ export class CipherTrustClient {
   private authToken?: string;
 
   constructor(options?: CipherTrustClientOptions) {
-    this.baseUrl = options?.baseUrl || "http://localhost:4005/api";
+    const envUrl =
+      (typeof process !== "undefined" && (process.env?.VITE_API_BASE_URL || process.env?.VITE_API_URL || process.env?.NEXT_PUBLIC_API_BASE_URL)) ||
+      (typeof import.meta !== "undefined" && ((import.meta as any).env?.VITE_API_BASE_URL || (import.meta as any).env?.VITE_API_URL || (import.meta as any).env?.NEXT_PUBLIC_API_BASE_URL));
+
+    const rawUrl = options?.baseUrl || envUrl || "https://ciphertrust-backend.onrender.com/api";
+    this.baseUrl = rawUrl.replace(/\/+$/, "");
     this.authToken = options?.authToken;
   }
 
   public setAuthToken(token: string) {
     this.authToken = token;
+  }
+
+  public getBaseUrl(): string {
+    return this.baseUrl;
   }
 
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
@@ -42,18 +51,32 @@ export class CipherTrustClient {
       headers["Authorization"] = `Bearer ${this.authToken}`;
     }
 
-    const res = await fetch(`${this.baseUrl}${endpoint}`, {
-      ...options,
-      headers,
-    });
+    const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+    const url = `${this.baseUrl}${cleanEndpoint}`;
 
-    const data = await res.json();
+    try {
+      const res = await fetch(url, {
+        ...options,
+        headers,
+      });
 
-    if (!res.ok) {
-      throw new Error(data.error?.message || data.error || `HTTP request failed with status ${res.status}`);
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        console.error(`[CipherTrust API Error] ${options.method || "GET"} ${url} failed [Status ${res.status}]`, data);
+        throw new Error(data.error?.message || data.error || `HTTP request failed with status ${res.status}`);
+      }
+
+      return data as T;
+    } catch (err: any) {
+      console.error(`[CipherTrust API Network Error] ${options.method || "GET"} ${url} - ${err.message || err}`);
+      throw err;
     }
+  }
 
-    return data as T;
+  // Health Check Method
+  public async getHealth(): Promise<{ status: string; service?: string; mode?: string; timestamp?: string }> {
+    return this.request<{ status: string; service?: string; mode?: string; timestamp?: string }>("/health");
   }
 
   // Auth Methods

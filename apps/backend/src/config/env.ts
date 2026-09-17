@@ -10,6 +10,7 @@ export const env = {
   ON_CHAIN_DID_ANCHOR: process.env.ON_CHAIN_DID_ANCHOR === "true" || true,
   JWT_SECRET: process.env.JWT_SECRET || "ciphertrust_super_secret_jwt_key_2026",
   CORS_ORIGIN: process.env.CORS_ORIGIN || "*",
+  ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS || process.env.CORS_ORIGIN || "*",
   DATABASE_URL: process.env.DATABASE_URL || "postgresql://ciphertrust:ciphertrust_pass@localhost:5433/ciphertrust_db?schema=public",
   RPC_URL: process.env.RPC_URL || "http://127.0.0.1:8555",
   CHAIN_ID: parseInt(process.env.CHAIN_ID || "31337", 10),

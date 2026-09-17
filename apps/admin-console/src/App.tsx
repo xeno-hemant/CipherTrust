@@ -8,8 +8,14 @@ import { IssueAssetPage } from "./pages/IssueAssetPage";
 import { RoleManagementPage } from "./pages/RoleManagementPage";
 import { AuditLogPage } from "./pages/AuditLogPage";
 
+const API_URL =
+  (import.meta as any).env?.VITE_API_BASE_URL ||
+  (import.meta as any).env?.VITE_API_URL ||
+  (import.meta as any).env?.NEXT_PUBLIC_API_BASE_URL ||
+  "https://ciphertrust-backend.onrender.com/api";
+
 const client = new CipherTrustClient({
-  baseUrl: "http://localhost:4005/api",
+  baseUrl: API_URL,
 });
 
 export const App: React.FC = () => {

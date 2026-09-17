@@ -17,7 +17,8 @@ export const Header: React.FC<HeaderProps> = ({ client, session, onSessionChange
     try {
       const adminAddr = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
       const { nonce } = await client.getNonce(adminAddr);
-      const message = `localhost wants you to sign in with your Ethereum account:\n${adminAddr}\n\nSign in to CipherTrust Admin Console\n\nNonce: ${nonce}`;
+      const domain = typeof window !== "undefined" ? window.location.host : "localhost";
+      const message = `${domain} wants you to sign in with your Ethereum account:\n${adminAddr}\n\nSign in to CipherTrust Admin Console\n\nNonce: ${nonce}`;
       const signature = "0x" + "1".repeat(130);
 
       const authRes = await client.verifySiwe(message, signature);
