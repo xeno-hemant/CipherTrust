@@ -16,6 +16,8 @@ import documentRoutes from "./routes/document.routes";
 import adminAuthRoutes from "./routes/admin-auth.routes";
 import verificationRoutes from "./routes/verification.routes";
 import kycRoutes from "./routes/kyc.routes";
+import { initDb } from "./db/initDb";
+
 
 
 const app = express();
@@ -126,17 +128,28 @@ app.use(errorHandler);
 
 const port = parseInt(env.PORT, 10);
 
-const server = app.listen(port, () => {
-  logger.info(`CipherTrust Backend API running on port ${port} [Mode: ${env.MOCK_MODE ? "MOCK_MODE" : "LIVE_CHAIN"}]`);
+const startServer = async () => {
+  await initDb().catch((err) => {
+    logger.error(`Database auto-init failed: ${err.message}`);
+  });
 
-  try {
-    const listener = new ChainListener();
-    listener.start().catch((err) => {
-      logger.warn("Chain listener in standby mode:", err.message || err);
-    });
-  } catch (e) {
-    // Standby
-  }
-});
+  const server = app.listen(port, () => {
+    logger.info(`CipherTrust Backend API running on port ${port} [Mode: ${env.MOCK_MODE ? "MOCK_MODE" : "LIVE_CHAIN"}]`);
+
+    try {
+      const listener = new ChainListener();
+      listener.start().catch((err) => {
+        logger.warn("Chain listener in standby mode:", err.message || err);
+      });
+    } catch (e) {
+      // Standby
+    }
+  });
+
+  return server;
+};
+
+startServer();
+
 
 export default app;
