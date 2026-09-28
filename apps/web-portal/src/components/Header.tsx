@@ -1,12 +1,12 @@
 import React from "react";
-import { ShieldCheck, Database, Layers, LayoutDashboard, PlusCircle, Users, FileText, UserCheck, Shield } from "lucide-react";
+import { ShieldCheck, Database, Layers, LayoutDashboard, PlusCircle, Users, FileText, UserCheck, Shield, FileCheck } from "lucide-react";
 import { ConnectWalletButton } from "./ConnectWalletButton";
 import { CipherTrustClient } from "@ciphertrust/sdk";
 import { AuthSession } from "@ciphertrust/shared-types";
 import { AdminTab } from "./admin/Sidebar";
 
 export type PortalMode = "user" | "admin";
-export type UserTab = "did" | "inventory";
+export type UserTab = "did" | "inventory" | "documents";
 
 interface HeaderProps {
   client: CipherTrustClient;
@@ -121,6 +121,17 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 <Layers className="w-3.5 h-3.5 text-sky-600" />
                 <span>Asset Inventory</span>
+              </button>
+              <button
+                onClick={() => setUserTab("documents")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                  userTab === "documents"
+                    ? "bg-white text-sky-700 shadow-sm border border-slate-200"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
+                }`}
+              >
+                <FileCheck className="w-3.5 h-3.5 text-sky-600" />
+                <span>My Documents</span>
               </button>
             </nav>
           )}

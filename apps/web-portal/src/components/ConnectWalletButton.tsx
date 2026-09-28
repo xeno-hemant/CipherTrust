@@ -18,28 +18,23 @@ export const ConnectWalletButton: React.FC<ConnectWalletButtonProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const connectAndAuthenticate = async (targetAddress?: string) => {
+  const connectAndAuthenticate = async () => {
+    // MetaMask is REQUIRED
+    if (typeof window === "undefined" || !(window as any).ethereum) {
+      setError("MetaMask not detected. Install MetaMask to connect.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
-      let address = targetAddress;
-      let signer: ethers.Signer | null = null;
+      // Trigger MetaMask popup
+      const provider = new ethers.BrowserProvider((window as any).ethereum);
+      await provider.send("eth_requestAccounts", []);
+      const signer = await provider.getSigner();
+      const address = await signer.getAddress();
 
-      if (!address && typeof window !== "undefined" && (window as any).ethereum) {
-        try {
-          const provider = new ethers.BrowserProvider((window as any).ethereum);
-          await provider.send("eth_requestAccounts", []);
-          signer = await provider.getSigner();
-          address = await signer.getAddress();
-        } catch (wErr) {
-          console.warn("Wallet prompt failed:", wErr);
-        }
-      }
-
-      if (!address) {
-        address = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"; // Issuer demo wallet
-      }
-
+      // SIWE Authentication
       try {
         const { nonce } = await client.getNonce(address);
         const domain = window.location.host;
@@ -47,10 +42,8 @@ export const ConnectWalletButton: React.FC<ConnectWalletButtonProps> = ({
         const statement = "Sign in to CipherTrust Decentralized Identity Portal";
         const message = `${domain} wants you to sign in with your Ethereum account:\n${address}\n\n${statement}\n\nURI: ${origin}\nVersion: 1\nChain ID: 31337\nNonce: ${nonce}\nIssued At: ${new Date().toISOString()}`;
 
-        let signature = "0x" + "1".repeat(130);
-        if (signer) {
-          signature = await signer.signMessage(message);
-        }
+        // MetaMask signature popup
+        const signature = await signer.signMessage(message);
 
         const authRes = await client.verifySiwe(message, signature);
         onSessionChange(authRes.session);
@@ -59,14 +52,17 @@ export const ConnectWalletButton: React.FC<ConnectWalletButtonProps> = ({
         onSessionChange({
           address,
           did: `did:ethr:31337:${address}`,
-          roles: [Role.ADMIN, Role.ISSUER, Role.VERIFIER, Role.HOLDER],
+          roles: [Role.HOLDER],
           issuedAt: new Date().toISOString(),
           expiresAt: new Date(Date.now() + 86400000).toISOString(),
         });
       }
     } catch (err: any) {
-      console.error("Wallet authentication failed:", err);
-      setError(err.message || "Failed to authenticate wallet");
+      if (err.code === 4001) {
+        setError("Connection rejected. Please approve MetaMask popup.");
+      } else {
+        setError(err.message || "Failed to authenticate wallet");
+      }
     } finally {
       setLoading(false);
     }
@@ -105,25 +101,14 @@ export const ConnectWalletButton: React.FC<ConnectWalletButtonProps> = ({
 
   return (
     <div className="flex flex-col items-end gap-1">
-      <div className="flex items-center gap-2">
-        <button
-          onClick={() => connectAndAuthenticate()}
-          disabled={loading}
-          className="flex items-center gap-2 bg-gradient-to-r from-sky-600 to-sky-500 hover:from-sky-500 hover:to-sky-400 text-white font-bold px-4 py-2.5 rounded-xl shadow-md shadow-sky-500/20 transition-all active:scale-95 disabled:opacity-50"
-        >
-          <Wallet className="w-4 h-4" />
-          <span>{loading ? "Authenticating..." : "Connect Wallet"}</span>
-        </button>
-
-        <button
-          onClick={() => connectAndAuthenticate("0x70997970C51812dc3A010C7d01b50e0d17dc79C8")}
-          disabled={loading}
-          title="Connect Demo Account"
-          className="text-xs font-semibold bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 px-3 py-2.5 rounded-xl shadow-sm transition-all"
-        >
-          Demo Login
-        </button>
-      </div>
+      <button
+        onClick={connectAndAuthenticate}
+        disabled={loading}
+        className="flex items-center gap-2 bg-gradient-to-r from-sky-600 to-sky-500 hover:from-sky-500 hover:to-sky-400 text-white font-bold px-4 py-2.5 rounded-xl shadow-md shadow-sky-500/20 transition-all active:scale-95 disabled:opacity-50"
+      >
+        <Wallet className="w-4 h-4" />
+        <span>{loading ? "Connecting MetaMask..." : "Connect MetaMask"}</span>
+      </button>
 
       {error && (
         <div className="flex items-center gap-1 text-xs text-rose-600 mt-1">

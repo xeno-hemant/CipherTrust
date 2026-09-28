@@ -12,7 +12,20 @@ import {
   Role,
   RoleAssignment,
   SystemStats,
+  DocumentRecord,
+  DocumentAccessRecord,
+  DocumentAuditEventRecord,
+  DocumentVerificationRecord,
+  ShareDocumentRequest,
+  VerifyIssuerRequest,
+  KycStatus,
+  KycRecord,
+  SubmitKycRequest,
+  ReviewKycRequest,
 } from "@ciphertrust/shared-types";
+
+export * from "@ciphertrust/shared-types";
+
 
 export interface CipherTrustClientOptions {
   baseUrl?: string;
@@ -28,7 +41,11 @@ export class CipherTrustClient {
       (typeof process !== "undefined" && (process.env?.VITE_API_BASE_URL || process.env?.VITE_API_URL || process.env?.NEXT_PUBLIC_API_BASE_URL)) ||
       (typeof import.meta !== "undefined" && ((import.meta as any).env?.VITE_API_BASE_URL || (import.meta as any).env?.VITE_API_URL || (import.meta as any).env?.NEXT_PUBLIC_API_BASE_URL));
 
-    const rawUrl = options?.baseUrl || envUrl || "https://ciphertrust-backend.onrender.com/api";
+    const isLocal =
+      (typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")) ||
+      (typeof import.meta !== "undefined" && (import.meta as any).env?.DEV);
+
+    const rawUrl = options?.baseUrl || envUrl || (isLocal ? "http://localhost:4005/api" : "https://ciphertrust-backend.onrender.com/api");
     this.baseUrl = rawUrl.replace(/\/+$/, "");
     this.authToken = options?.authToken;
   }
@@ -42,8 +59,9 @@ export class CipherTrustClient {
   }
 
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+    const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
     const headers: Record<string, string> = {
-      "Content-Type": "application/json",
+      ...(isFormData ? {} : { "Content-Type": "application/json" }),
       ...(options.headers as Record<string, string>),
     };
 
@@ -163,4 +181,114 @@ export class CipherTrustClient {
   public async getStats(): Promise<SystemStats> {
     return this.request<SystemStats>("/stats");
   }
+
+  // Document Management Methods
+  public async uploadDocument(formData: FormData): Promise<DocumentRecord> {
+    return this.request<DocumentRecord>("/documents/upload", {
+      method: "POST",
+      body: formData,
+    });
+  }
+
+  public async getMyDocuments(): Promise<DocumentRecord[]> {
+    return this.request<DocumentRecord[]>("/documents/my");
+  }
+
+  public async getSharedDocuments(): Promise<DocumentRecord[]> {
+    return this.request<DocumentRecord[]>("/documents/shared");
+  }
+
+  public async getDocumentDetails(id: string): Promise<DocumentRecord> {
+    return this.request<DocumentRecord>(`/documents/${encodeURIComponent(id)}`);
+  }
+
+  public async downloadDocument(id: string): Promise<Blob> {
+    const headers: Record<string, string> = {};
+    if (this.authToken) {
+      headers["Authorization"] = `Bearer ${this.authToken}`;
+    }
+
+    const res = await fetch(`${this.baseUrl}/documents/${encodeURIComponent(id)}/download`, {
+      method: "GET",
+      headers,
+    });
+
+    if (!res.ok) {
+      throw new Error(`Download failed with status ${res.status}`);
+    }
+
+    return res.blob();
+  }
+
+  public async shareDocument(id: string, params: ShareDocumentRequest): Promise<DocumentAccessRecord> {
+    return this.request<DocumentAccessRecord>(`/documents/${encodeURIComponent(id)}/share`, {
+      method: "POST",
+      body: JSON.stringify(params),
+    });
+  }
+
+  public async revokeDocumentAccess(id: string, accessId: string): Promise<DocumentAccessRecord> {
+    return this.request<DocumentAccessRecord>(`/documents/${encodeURIComponent(id)}/revoke`, {
+      method: "POST",
+      body: JSON.stringify({ accessId }),
+    });
+  }
+
+  public async verifyDocumentIntegrity(id: string): Promise<{ match: boolean; storedHash: string; calculatedHash: string; verificationStatus: string; verifiedAt: string }> {
+    return this.request<{ match: boolean; storedHash: string; calculatedHash: string; verificationStatus: string; verifiedAt: string }>(
+      `/documents/${encodeURIComponent(id)}/verify-integrity`
+    );
+  }
+
+  public async verifyDocumentIssuer(
+    id: string,
+    params: VerifyIssuerRequest
+  ): Promise<{ document: DocumentRecord; verification: DocumentVerificationRecord }> {
+    return this.request<{ document: DocumentRecord; verification: DocumentVerificationRecord }>(
+      `/documents/${encodeURIComponent(id)}/verify-issuer`,
+      {
+        method: "POST",
+        body: JSON.stringify(params),
+      }
+    );
+  }
+
+  public async getDocumentAuditHistory(id: string): Promise<DocumentAuditEventRecord[]> {
+    return this.request<DocumentAuditEventRecord[]>(`/documents/${encodeURIComponent(id)}/audit-history`);
+  }
+
+  public async deleteDocument(id: string): Promise<{ success: boolean; message: string }> {
+    return this.request<{ success: boolean; message: string }>(`/documents/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+    });
+  }
+
+  // KYC Methods
+  public async submitKyc(data: SubmitKycRequest): Promise<KycRecord> {
+    return this.request<KycRecord>("/kyc/submit", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  public async getKycStatus(): Promise<KycRecord | { status: KycStatus.NOT_SUBMITTED }> {
+    return this.request<KycRecord | { status: KycStatus.NOT_SUBMITTED }>("/kyc/status");
+  }
+
+  public async getKycApplications(status?: string): Promise<KycRecord[]> {
+    const query = status ? `?status=${encodeURIComponent(status)}` : "";
+    return this.request<KycRecord[]>(`/kyc/applications${query}`);
+  }
+
+  public async getKycApplication(id: string): Promise<KycRecord> {
+    return this.request<KycRecord>(`/kyc/applications/${encodeURIComponent(id)}`);
+  }
+
+  public async reviewKyc(id: string, review: ReviewKycRequest): Promise<KycRecord> {
+    return this.request<KycRecord>(`/kyc/applications/${encodeURIComponent(id)}/review`, {
+      method: "POST",
+      body: JSON.stringify(review),
+    });
+  }
 }
+

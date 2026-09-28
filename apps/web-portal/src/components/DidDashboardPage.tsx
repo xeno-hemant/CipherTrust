@@ -86,9 +86,13 @@ export const DidDashboardPage: React.FC<DidDashboardPageProps> = ({ client, sess
               <Cpu className="w-5 h-5 text-sky-600" />
               DID Document Details
             </h3>
-            {didDoc?.verified && (
+            {didDoc?.verified ? (
               <span className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-lg font-bold flex items-center gap-1">
-                <Check className="w-3.5 h-3.5" /> Verified
+                <Check className="w-3.5 h-3.5" /> KYC Verified (Tier 1)
+              </span>
+            ) : (
+              <span className="text-xs bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-1 rounded-lg font-bold flex items-center gap-1">
+                <ShieldCheck className="w-3.5 h-3.5 text-amber-600" /> Verification Required
               </span>
             )}
           </div>

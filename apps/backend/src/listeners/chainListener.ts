@@ -47,7 +47,7 @@ export class ChainListener {
               txHash: event.log.transactionHash,
               blockNumber: event.log.blockNumber,
               logIndex: event.log.index,
-              metadataJson: { role, account, assignedBy },
+              metadataJson: JSON.stringify({ role, account, assignedBy }),
             },
           });
         } catch (err) {
@@ -73,7 +73,7 @@ export class ChainListener {
               txHash: event.log.transactionHash,
               blockNumber: event.log.blockNumber,
               logIndex: event.log.index,
-              metadataJson: { role, account, revokedBy },
+              metadataJson: JSON.stringify({ role, account, revokedBy }),
             },
           });
         } catch (err) {
@@ -104,7 +104,7 @@ export class ChainListener {
               txHash: event.log.transactionHash,
               blockNumber: event.log.blockNumber,
               logIndex: event.log.index,
-              metadataJson: { tokenId: tokenId.toString(), from, to, didLinked },
+              metadataJson: JSON.stringify({ tokenId: tokenId.toString(), from, to, didLinked }),
             },
           });
         } catch (err) {
@@ -133,7 +133,7 @@ export class ChainListener {
               txHash: event.log.transactionHash,
               blockNumber: event.log.blockNumber,
               logIndex: event.log.index,
-              metadataJson: { eventTypeHash, timestamp: timestamp.toString(), onChainIndex: index.toString() },
+              metadataJson: JSON.stringify({ eventTypeHash, timestamp: timestamp.toString(), onChainIndex: index.toString() }),
             },
           });
         } catch (err) {

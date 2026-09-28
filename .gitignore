@@ -17,9 +17,17 @@ typechain-types/
 .env.production
 *.log
 
+# Database & Local Storage
+*.db
+*.db-journal
+dev.db
+apps/backend/storage/
+apps/backend/prisma/dev.db
+
 # IDE & System
 .DS_Store
 .vscode/
 .idea/
 *.suo
 *.user
+

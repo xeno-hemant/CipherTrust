@@ -1,7 +1,7 @@
 import React from "react";
-import { LayoutDashboard, PlusCircle, Users, FileText } from "lucide-react";
+import { LayoutDashboard, PlusCircle, Users, FileText, UserCheck } from "lucide-react";
 
-export type AdminTab = "dashboard" | "issue" | "roles" | "audit";
+export type AdminTab = "dashboard" | "issue" | "roles" | "audit" | "kyc";
 
 interface SidebarProps {
   activeTab: AdminTab;
@@ -11,6 +11,7 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
   const navItems = [
     { id: "dashboard", label: "Dashboard Overview", icon: LayoutDashboard },
+    { id: "kyc", label: "KYC & Compliance", icon: UserCheck },
     { id: "issue", label: "Issue Verifiable Asset", icon: PlusCircle },
     { id: "roles", label: "Role Management", icon: Users },
     { id: "audit", label: "Audit Log & History", icon: FileText },

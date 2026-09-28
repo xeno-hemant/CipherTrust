@@ -36,7 +36,7 @@ export class AuditService {
           txHash: entry.txHash,
           blockNumber: entry.blockNumber,
           logIndex: Date.now() % 1000,
-          metadataJson: metadata as any,
+          metadataJson: typeof metadata === "string" ? metadata : JSON.stringify(metadata),
         },
       });
     } catch (e) {
@@ -76,7 +76,7 @@ export class AuditService {
           txHash: entry.txHash,
           blockNumber: entry.blockNumber,
           timestamp: entry.timestamp.toISOString(),
-          metadata: entry.metadataJson as any,
+          metadata: typeof entry.metadataJson === "string" ? (() => { try { return JSON.parse(entry.metadataJson); } catch { return {}; } })() : (entry.metadataJson || {}),
         }));
 
         return {

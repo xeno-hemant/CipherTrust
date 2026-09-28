@@ -12,6 +12,11 @@ import nftRoutes from "./routes/nft.routes";
 import rolesRoutes from "./routes/roles.routes";
 import auditRoutes from "./routes/audit.routes";
 import statsRoutes from "./routes/stats.routes";
+import documentRoutes from "./routes/document.routes";
+import adminAuthRoutes from "./routes/admin-auth.routes";
+import verificationRoutes from "./routes/verification.routes";
+import kycRoutes from "./routes/kyc.routes";
+
 
 const app = express();
 
@@ -102,6 +107,19 @@ app.use("/audit", auditRoutes);
 
 app.use("/api/stats", statsRoutes);
 app.use("/stats", statsRoutes);
+
+app.use("/api/documents", documentRoutes);
+app.use("/documents", documentRoutes);
+
+app.use("/api/admin/auth", adminAuthRoutes);
+app.use("/admin/auth", adminAuthRoutes);
+
+app.use("/api/verification", verificationRoutes);
+app.use("/verification", verificationRoutes);
+
+app.use("/api/kyc", kycRoutes);
+app.use("/kyc", kycRoutes);
+
 
 // Error Handler
 app.use(errorHandler);

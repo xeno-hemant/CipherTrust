@@ -14,11 +14,13 @@
   "dependencies": {
     "@ciphertrust/shared-types": "file:../../packages/shared-types",
     "@prisma/client": "^5.14.0",
+    "@types/multer": "^2.2.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "ethers": "^6.12.1",
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
+    "multer": "^2.4.0",
     "siwe": "^2.3.2"
   },
   "devDependencies": {

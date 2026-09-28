@@ -1,5 +1,5 @@
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -7,17 +7,11 @@ generator client {
   provider = "prisma-client-js"
 }
 
-enum Role {
-  ADMIN
-  ISSUER
-  VERIFIER
-  HOLDER
-}
-
 model User {
   address      String        @id
   createdAt    DateTime      @default(now())
   didDocuments DidDocument[]
+  documents    Document[]
 }
 
 model DidDocument {
@@ -37,7 +31,7 @@ model NftAsset {
   ownerDid        String
   owner           DidDocument @relation(fields: [ownerDid], references: [did])
   metadataUri     String
-  metadataJson    Json
+  metadataJson    String
   mintedBy        String
   mintedAt        DateTime    @default(now())
 
@@ -48,7 +42,7 @@ model RoleAssignment {
   id         String      @id @default(uuid())
   did        String
   didDoc     DidDocument @relation(fields: [did], references: [did])
-  role       Role
+  role       String
   assignedBy String
   assignedAt DateTime    @default(now())
   active     Boolean     @default(true)
@@ -63,7 +57,104 @@ model AuditLogEntry {
   blockNumber  Int
   logIndex     Int      @default(0)
   timestamp    DateTime @default(now())
-  metadataJson Json
+  metadataJson String
 
   @@unique([txHash, logIndex])
 }
+
+model Document {
+  id                  String                 @id @default(uuid())
+  ownerAddress        String
+  owner               User                   @relation(fields: [ownerAddress], references: [address])
+  documentType        String                 @default("OTHER")
+  title               String
+  description         String?
+  originalFilename    String
+  encryptedStorageKey String
+  documentHash        String
+  mimeType            String
+  fileSize            Int
+  encryptionVersion   String                 @default("AES-256-GCM-v1")
+  status              String                 @default("ACTIVE")
+  verificationStatus  String                 @default("UNVERIFIED")
+  issuerReference     String?
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+  deletedAt           DateTime?
+  accessList          DocumentAccess[]
+  versions            DocumentVersion[]
+  verifications       DocumentVerification[]
+  auditEvents         DocumentAuditEvent[]
+}
+
+model DocumentAccess {
+  id             String    @id @default(uuid())
+  documentId     String
+  document       Document  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  ownerAddress   String
+  granteeAddress String
+  permissionType String    @default("VIEW")
+  grantedAt      DateTime  @default(now())
+  expiresAt      DateTime?
+  revokedAt      DateTime?
+  status         String    @default("ACTIVE")
+}
+
+model DocumentVersion {
+  id                  String   @id @default(uuid())
+  documentId          String
+  document            Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  versionNumber       Int
+  documentHash        String
+  encryptedStorageKey String
+  createdAt           DateTime @default(now())
+}
+
+model DocumentVerification {
+  id                    String   @id @default(uuid())
+  documentId            String
+  document              Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  verifierAddress       String
+  verificationType      String
+  verificationResult    String   @default("VERIFIED")
+  verificationReference String?
+  verifiedAt            DateTime @default(now())
+  notes                 String?
+}
+
+model DocumentAuditEvent {
+  id               String    @id @default(uuid())
+  documentId       String?
+  document         Document? @relation(fields: [documentId], references: [id], onDelete: SetNull)
+  actorAddress     String
+  actionType       String
+  resourceType     String    @default("DOCUMENT")
+  resourceId       String
+  eventHash        String
+  blockchainTxHash String?
+  createdAt        DateTime  @default(now())
+  metadataJson     String?
+}
+
+model KycApplication {
+  id               String    @id @default(uuid())
+  applicantAddress String
+  applicantDid     String
+  fullName         String
+  dateOfBirth      String?
+  nationality      String?
+  idType           String    @default("AADHAAR")
+  idNumber         String
+  documentFilename String?
+  documentData     String?
+  selfieData       String?
+  phone            String?
+  email            String?
+  status           String    @default("PENDING")
+  reviewedBy       String?
+  reviewNotes      String?
+  reviewedAt       DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+

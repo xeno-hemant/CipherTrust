@@ -4,10 +4,10 @@
   "version": "1.0.0",
   "description": "CipherTrust — Blockchain-Based Identity, Access Control & Digital Asset Management Platform",
   "scripts": {
-    "build": "turbo run build",
-    "dev": "turbo run dev",
-    "lint": "turbo run lint",
-    "test": "turbo run test",
+    "build": "npx turbo run build",
+    "dev": "npx turbo run dev",
+    "lint": "npx turbo run lint",
+    "test": "npx turbo run test",
     "clean": "turbo run clean && rm -rf node_modules"
   },
   "devDependencies": {
